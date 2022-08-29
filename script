@@ -1,0 +1,15 @@
+w
+https://www.linkedin.com/
+x
+//input[@id='session_key']
+s
+k.kovalenko@bukovel.com
+back
+//input[@id='session_password']
+s
+137a8f2e37
+back
+>//button[@name='homepage-basic_signin-form_submit-button']
+x
+//button[@class='sign-in-form__submit-button']
+c
