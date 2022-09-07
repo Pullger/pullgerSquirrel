@@ -1,6 +1,6 @@
 import time
 import inspect
-from . import exceptions
+from pullgerExceptions import squirrel as exceptions
 from .SquirrelConnectors import Connectors
 
 class Squirrel(object):
@@ -87,9 +87,25 @@ class Squirrel(object):
                 self._By = By
 
             except BaseException as e:
-                raise exceptions.selenium.chrome.General(f'Erron on initialisation chrome. Internal error information.', level=50, exception=e)
+                errorText = str(e)
+
+                if errorText.find("This version of ChromeDriver only supports Chrome version") != -1:
+                    raise exceptions.selenium.chrome.DriverVersionDifferences(
+                        'Incorrect chrome driver versions',
+                        level=50,
+                        exception=e
+                    )
+                else:
+                    raise exceptions.selenium.chrome.General(
+                        f'Erron on initialisation chrome. Internal error information.',
+                        level=50,
+                        exception=e
+                    )
         else:
-            raise exceptions.selenium.chrome.General(f'Unexpecter "connector" type: {self._connector}.', level=50)
+            raise exceptions.selenium.chrome.General(
+                f'Unexpecter "connector" type: {self._connector}.',
+                level=50
+            )
 
         self._initialized = True;
 
