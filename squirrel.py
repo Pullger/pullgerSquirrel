@@ -1,5 +1,6 @@
 from pullgerSquirrel import api
 
+
 class commandInput():
     def __init__(self):
         self.scriptFile = None;
