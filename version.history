@@ -1,15 +1,31 @@
 #Vesion history [pullgerSquirrel]
 
-# {1.1.0.0} [pullgerSquirrel]
+# {0.2.3.1}
+# --BUG--/issues/3-- Error on Selenium in Docker
+
+# {0.2.3.0}
+# --CHANGE--/issues/2-- bringing the code to PCMSS-PS-02 standard
+
+# {0.2.2.0} [pullgerSquirrel]
+# --BUG--/issues/1-- selenium do not work in docker
+
+# {0.2.1.0} [pullgerSquirrel]
+# pep
+
+
+# {0.2.0.0} [pullgerSquirrel]
+# connector
+
+# {0.1.0.0} [pullgerSquirrel]
 # - add in api script for update google driver and google chrome
 # - add in main app executing script for update
 
-# {1.0.2.0} [pullgerSquirrel]
+# {0.0.2.0} [pullgerSquirrel]
 # - transfer exceptions to separate module
 
-# {1.0.1.0} [pullgerSquirrel]
+# {0.0.1.0} [pullgerSquirrel]
     # 1.0.1.0 [class Squirrel]
     # 1.0.1.0 [class WebElements]
     # 1.0.1.0 [module exceptation]
 
-# {1.0.0.0} [pullgerSquirrel]
+# {0.0.0.0} [pullgerSquirrel]

@@ -1,0 +1,8 @@
+Development standards:
+    PCMSS-PS-01:
+        url: https://dev.pullger.com/pullgerSquirrel/architecture/index.htm?guid=F451CCBA-2E5F-4aca-9301-2DFA30A3DFAB
+        description: using PEP8
+
+    PCMSS-PS-02:
+        url: https://dev.pullger.com/pullgerSquirrel/architecture/index.htm?guid=A7F3FB87-EC06-4de8-B171-D22C1B13FF7C
+        description: catch all exceptions in calling external libraries
