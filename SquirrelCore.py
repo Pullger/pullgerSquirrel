@@ -1,258 +1,160 @@
 import time
 import inspect
-from . import exceptions
-from .SquirrelConnectors import Connectors
+from pullgerExceptions import pullgerSquirrel as exceptions
+# from .SquirrelConnectors import Connectors
+from . import connectors
+from .connectors.selenium import connector
+from pullgerLogin.pullgerSquirrel import logger
+
 
 class Squirrel(object):
     __slots__ = (
         '_connector',
         '_connectorMode',
-        '_driver',
-        '_Keys',
-        '_By',
+        '_libraries',
         '_current_url',
         '_initialized'
     )
+
+    class _Libraries:
+        __slots__ = ('_driver', '_keyboard', '_implementation')
+
+        @property
+        def driver(self):
+            return self._driver
+
+        @property
+        def keyboard(self):
+            return self._keyboard
+
+        @property
+        def implementation(self):
+            return self._implementation
+
+        def __init__(self, driver, keyboard, implementation, **kwargs):
+            self._driver = driver
+            self._keyboard = keyboard
+            self._implementation = implementation
+
     @property
     @staticmethod
     def VERSION():
         return (1, 0, 1, 0)
         # versions history
         # 1.0.1.0 adaptation raise exeptatation fore new version of exceptation module
+
     @property
     @staticmethod
     def VERSION_INFO():
         return '.'.join(str(nv) for nv in Squirrel.VERSION)
+
     @property
     def __version__(self):
         return self.VERSION_INFO
+
+    @property
+    def connector(self):
+        return self._connector
+
+    @property
+    def libraries(self):
+        return self._libraries
+
     @property
     def current_url(self):
         return self._current_url
+
     @property
     def initialized(self):
         return self._initialized
 
-    def __init__(self, inConnector=None, inConnectorMode=None, **kwargs):
+    def __init__(self, conn: connector = None, **kwargs):
         self._connector = None
+        self._libraries = None
         self._current_url = False
         self._initialized = False
 
-        if 'connector' in kwargs:
-            if inspect.isclass(kwargs['connector']):
-                self._connector = kwargs['connector']
-
-                if 'connectorMode' in kwargs:
-                    self._connectorMode = kwargs['connectorMode']
-            else:
-                raise exceptions.InterfaceData(f'Incorrect connector DATA: need one off sqirrel.Connectors class', level=50)
+        if conn is not None:
+            self._connector = conn
         else:
-            if inConnector != None:
-                if type(inConnector) == str:
-                    if inConnector == 'selenium':
-                        self._connector = Connectors.selenium
-                    else:
-                        raise exceptions.InterfaceData(f'Unknown connector {inConnector}', level=50)
-
-                elif inspect.isclass(inConnector):
-                    self._connector = inConnector
-                else:
-                    raise exceptions.InterfaceData('Incorrect connector DATA: need one off sqirrel.Connectors class', level=50)
-            if inConnectorMode != None:
-                pass
+            raise exceptions.InterfaceData(
+                f'Incorrect connector DATA: need one off pullgerSquirrel.connectors classes',
+                level=30
+            )
 
     def initialize(self):
-        if self._connector == Connectors.selenium:
-            import undetected_chromedriver.v2 as uc
-            from selenium.webdriver.common.keys import Keys
-            from selenium.webdriver.common.by import By
+        self._libraries = self._Libraries(
+            keyboard=self._connector.getKeyboardLibrary(),
+            implementation=self._connector.getImplementationLibrary(),
+            driver=self._connector.getDriverLibrary()
+        )
 
-            chrome_options = uc.ChromeOptions()
+        self._initialized = True
 
-            # chrome_options.add_argument("--headless")
-            chrome_options.add_argument("--disable-extensions")
-            chrome_options.add_argument("--disable-popup-blocking")
-            chrome_options.add_argument("--profile-directory=Default")
-            chrome_options.add_argument("--ignore-certificate-errors")
-            chrome_options.add_argument("--disable-plugins-discovery")
-            chrome_options.add_argument("--incognito")
-            chrome_options.add_argument("--user_agent=DN")
-            chrome_options.add_argument('--no-first-run')
-            chrome_options.add_argument('--no-service-autorun')
-            chrome_options.add_argument('--password-store=basic')
+    def get(self, url=None, **kwargs):
+        """
+        Procedure for compatibility with Selenium
+        """
+        return self.get_page(url, **kwargs)
 
-            try:
-                self._driver = uc.Chrome(options=chrome_options)
-                self._Keys = Keys
-                self._By = By
+    def get_page(self, url: str = None, **kwargs):
+        """
+        Loads a web page in current connector
 
-            except BaseException as e:
-                raise exceptions.selenium.chrome.General(f'Erron on initialisation chrome. Internal error information.', level=50, exception=e)
+        :kwag param url:
+        :kwag param timeout:
+        :kwag param xpath:
+        :kwag param readyState:
+        :return: no return
+        """
+        if url is not None:
+            result = self.connector.get_page(squirrel=self, url=url, **kwargs)
+            if result is True:
+                self._current_url = self.connector.get_current_url(squirrel=self)
+            else:
+                self._current_url = None
+                raise exceptions.ErrorOnLoadPage(
+                    message='Incorrect loading page.',
+                    level=40
+                )
         else:
-            raise exceptions.selenium.chrome.General(f'Unexpecter "connector" type: {self._connector}.', level=50)
+            raise exceptions.InterfaceData(
+                message='Incorrect call getPage in squirrel (url is mandatory k kwarg)',
+                level=30
+            )
 
-        self._initialized = True;
+    def get_html(self,**kwargs):
+        return self._connector.get_html(squirrel=self)
 
-    def get(self, inURL = None, **kwargs):
-        result = None
-
-        url = inURL
-        #Used for whait for render
-        timeout = None
-        xpath = None
-        readyState = None
-
-        if 'url' in kwargs:
-            url = kwargs['url']
-        if 'timeout' in kwargs:
-            timeout = kwargs['timeout']
-        if 'xpath' in kwargs:
-            xpath = kwargs['xpath']
-        if 'readyState' in kwargs:
-            readyState = kwargs['readyState']
-
-
-        if url != None:
-            if self._connector == Connectors.selenium:
-                secondTRY = False
-                try:
-                    time.sleep(1)
-                    if url.find('"') == -1:
-                        sHooks = '"'
-                    else:
-                        sHooks = "'"
-
-                    loading_url = f"window.location.href={sHooks}{url}{sHooks}"
-
-                    self._driver.execute_script(loading_url);
-                    time.sleep(3)
-                except BaseException as e:
-                    raise exceptions.selenium.GetPage(f'Exception on load: [{loading_url}]. Discription:', level=50, exception=e)
-
-                #Whait for render page with timing out
-                if timeout == None:
-                    timeout = 5;
-                isRendered = False
-                circleCalc = 0
-
-                if readyState != None:
-                    time.sleep(1)
-                    try:
-                        curState = self._driver.execute_script('return document.readyState');
-
-                        while isRendered == False and (circleCalc < timeout or isRendered == True):
-                            if readyState == curState:
-                                isRendered = True
-
-                            if isRendered == False:
-                                time.sleep(1)
-                            circleCalc += 1
-
-                        result = isRendered
-                    except:
-                        result = True
-
-                elif xpath != None:
-                    while isRendered == False and (circleCalc < timeout or isRendered == True):
-                        CheckBlock = self.find_XPATH(xpath)
-                        if CheckBlock != None:
-                            isRendered = True
-                        if isRendered == False:
-                            time.sleep(1)
-                        circleCalc += 1
-
-                    result = isRendered
-                else:
-                    result = True
-
-                if result == True:
-                    time.sleep(5) #Wait for rendering
-                    try:
-                        self._current_url = self._driver.current_url
-                    except:
-                        time.sleep(25)
-                        self._current_url = self._driver.current_url
-                else:
-                    self._current_url = None
-
-        return result
-
-
-    def updateURL(self):
-        self._current_url = self._driver.current_url
+    def update_url(self):
+        self._current_url = self.driver.current_url
 
     def close(self):
-        if self._connector == Connectors.selenium:
-            self._driver.close();
+        return self._connector.close(squirrel=self)
 
-    def finds_XPATH(self, inXPATH):
-        result = None
-        if self._connector == Connectors.selenium:
-            result = [];
-            for el in self._driver.find_elements(self._By.XPATH, inXPATH):
-                result.append(WebElements(self, el));
-        else:
-            raise exceptions.InternalData(
-                f'Unknown connector.',
-                level=40
-            )
+    def find_xpath(self, xpath: str, log_error: bool = False, do_not_log: bool = True):
 
-        return result
+        return self._connector.find_element_xpath(
+            squirrel=self,
+            xpath=xpath,
+            log_error=log_error,
+            do_not_log=do_not_log
+        )
 
-    def find_XPATH(self, inXPATH, doNotLog = False):
-        result = None
-        if self._connector == Connectors.selenium:
-            try:
-                fEl = self._driver.find_element(self._By.XPATH, inXPATH)
-                result = WebElements(self, fEl)
-            except BaseException as e:
-                if doNotLog != True:
-                    inf = f'Error on finding {inXPATH} on page {self._driver.current_url}. Internal discription: {str(e)}'
-                    logger.info(inf)
-        else:
-            raise exceptions.InternalData(
-                f'Unknown connector.',
-                level=40
-            )
+    def finds_xpath(self, xpath: str):
 
-        return result
+        return self._connector.finds_element_xpath(
+            squirrel=self,
+            xpath=xpath
+        )
 
-    def send_END(self):
-        if self._connector == Connectors.selenium:
-            try:
-                self._driver.find_element(self._By.XPATH, "//body").send_keys(self._Keys.END)
-                return True;
-            except BaseException as e:
-                raise exceptions.selenium.PageOperation(
-                    f"Error on click button END on page {self._driver.current_url}.",
-                    level=40,
-                    exception=e
-                )
+    def send_end(self):
+        self.connector.send_end(squirrel=self)
+        return True
 
-        else:
-            raise exceptions.InternalData(
-                f"Unknown connector.",
-                level=40
-            )
-
-    def send_PAGE_DOWN(self):
-        if self._connector == Connectors.selenium:
-            try:
-                self._driver.find_element(self._By.XPATH, "//body").send_keys(self._Keys.PAGE_DOWN)
-                return True;
-            except BaseException as e:
-                raise exceptions.selenium.PageOperation(
-                    f"Error on click button PAGE_DOWN on page {self._driver.current_url}.",
-                    level=40,
-                    exception=e
-                )
-        else:
-            raise exceptions.InternalData(
-                f"Unknown connector.",
-                level=40
-            )
-
-        return result;
+    def send_page_down(self):
+        self.connector.send_page_down(squirrel=self)
+        return True
 
     def send_TAB(self):
         if self._connector == Connectors.selenium:
@@ -306,112 +208,85 @@ class Squirrel(object):
                 level=40
             )
 
+
 class WebElements:
     __slots__ = (
-        '_connector',
-        '_driver',
-        '_By',
-        '_selWebElement',
+        '_squirrel',
+        '_web_element',
         '_text'
     )
 
     @property
     @staticmethod
     def VERSION():
-        return (1, 0, 1, 0)
-        # versions history
-        # 1.0.1.0 adaptation raise exeptatation fore new version of exceptation module
+        return 1, 0, 1, 0
+
     @property
     @staticmethod
     def VERSION_INFO():
         return '.'.join(str(nv) for nv in Squirrel.VERSION)
+
     @property
     def __version__(self):
         return self.VERSION_INFO
 
-    def __init__(self, inParent, inSelWebElement):
-        self._connector = inParent._connector
-        self._driver = inParent._driver
-        self._By = inParent._By
-        self._selWebElement = inSelWebElement
+    @property
+    def squirrel(self):
+        return self._squirrel
+
+    @property
+    def web_element(self):
+        return self._web_element
+
+    def __init__(self, squirrel: Squirrel, web_element):
+        self._squirrel = squirrel
+        self._web_element = web_element
 
     @property
     def text(self):
-        if self._connector == Connectors.selenium:
-            return self._selWebElement.text;
-        else:
-            raise exceptions.InternalData(
-                f"Unknown connector.",
-                level=40
-            )
+        return self._squirrel.connector.text(
+            web_element=self._web_element
+        )
 
     @property
     def tag_name(self):
-        if self._connector == Connectors.selenium:
-            return self.selWebElement.tag_name;
-        else:
-            raise exceptions.InternalData(
-                f"Unknown connector.",
-                level=40
-            )
+        return self._squirrel.connector.tag_name(
+            web_element=self._web_element
+        )
 
-    def finds_XPATH(self, inXPATH):
-        if self._connector == Connectors.selenium:
-            returnLst = [];
+    def get_attribute(self, name: str):
+        return self._squirrel.connector.get_attribute(
+            web_element=self._web_element,
+            name=name
+        )
 
-            for el in self._selWebElement.find_elements(self._By.XPATH, inXPATH):
-                returnLst.append(WebElements(self, el));
+        # if self._connector == Connectors.selenium:
+        #     return self._web_element.get_attribute(inAttribute)
+        # else:
+        #     raise exceptions.InternalData(
+        #         f"Unknown connector.",
+        #         level=40
+        #     )
 
-            return returnLst
-        else:
-            raise exceptions.InternalData(
-                f"Unknown connector.",
-                level=40
-            )
+    def find_xpath(self, xpath: str, log_error: bool = False, do_not_log: bool = True):
 
-    def find_XPATH(self, inXPATH, doNotLog = False):
-        result = None
-        if self._connector == Connectors.selenium:
-            try:
-                fEl = self._selWebElement.find_element(self._By.XPATH, inXPATH)
-                result = WebElements(self, fEl)
-            except BaseException as e:
-                if doNotLog != True:
-                    inf = f'Error on finding {inXPATH} on page {self._driver.current_url}. Internal discription: {str(e)}'
-                    logger.info(inf)
-        else:
-            raise exceptions.InternalData(
-                f"Unknown connector.",
-                level=40
-            )
+        return self._squirrel.connector.find_element_xpath(
+            squirrel=self._squirrel,
+            web_element=self._web_element,
+            xpath=xpath,
+            log_error=log_error,
+            do_not_log=do_not_log
+        )
+    
+    def finds_xpath(self, xpath: str):
 
-        return result
+        return self._squirrel.connector.finds_element_xpath(
+            squirrel=self._squirrel,
+            web_element=self._web_element,
+            xpath=xpath)
 
-    def get_attribute(self, inAttribute):
-        if self._connector == Connectors.selenium:
-            return self._selWebElement.get_attribute(inAttribute)
-        else:
-            raise exceptions.InternalData(
-                f"Unknown connector.",
-                level=40
-            )
-
-    def send_string(self, inString):
-        if self._connector == Connectors.selenium:
-            self._selWebElement.send_keys(inString)
-            return True;
-        else:
-            raise exceptions.InternalData(
-                f"Unknown connector.",
-                level=40
-            )
+    def send_string(self, string: str):
+        return self.squirrel.connector.send_string(web_element=self.web_element, string=string)
 
     def click(self):
-        if self._connector == Connectors.selenium:
-            self._selWebElement.click();
-            return True
-        else:
-            raise exceptions.InternalData(
-                f"Unknown connector.",
-                level=40
-            )
+        return self.squirrel.connector.click(web_element=self.web_element)

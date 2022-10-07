@@ -1,0 +1,41 @@
+from ..general import SeleniumConnector
+
+
+class SeleniumChromeStandard(SeleniumConnector):
+    def __str__(self):
+        return "selenium.chrome.standard"
+
+    def getDriverLibrary(self):
+        from selenium import webdriver
+        from pullgerExceptions import pullgerSquirrel as exceptions
+
+        chrome_options = webdriver.ChromeOptions()
+        chrome_options.add_argument("--disable-extensions")
+        chrome_options.add_argument("--disable-popup-blocking")
+        chrome_options.add_argument("--profile-directory=Default")
+        chrome_options.add_argument("--ignore-certificate-errors")
+        chrome_options.add_argument("--disable-plugins-discovery")
+        chrome_options.add_argument("--incognito")
+        chrome_options.add_argument("--user_agent=DN")
+        chrome_options.add_argument('--no-first-run')
+        chrome_options.add_argument('--no-service-autorun')
+        chrome_options.add_argument('--password-store=basic')
+
+        try:
+            wd = webdriver.Chrome(options=chrome_options)
+        except BaseException as e:
+            errorText = str(e)
+
+            if errorText.find("This version of ChromeDriver only supports Chrome version") != -1:
+                raise exceptions.selenium.chrome.DriverVersionDifferences(
+                    'Incorrect chrome driver versions',
+                    level=50,
+                    exception=e
+                )
+            else:
+                raise exceptions.selenium.chrome.General(
+                    f'Error on initialisation chrome. Internal error information.',
+                    level=50,
+                    exception=e
+                )
+        return wd

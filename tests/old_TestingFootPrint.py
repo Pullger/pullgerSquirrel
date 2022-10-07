@@ -1,7 +1,7 @@
 import sys
 import importlib
 from importlib import reload
-sys.path.append('..')
+sys.path.append('../..')
 
 from squirrel import SquirrelCore
 
