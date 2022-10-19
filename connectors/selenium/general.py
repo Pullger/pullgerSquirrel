@@ -1,8 +1,9 @@
 import time
 import abc
-from pullgerExceptions import pullgerSquirrel as exceptions
 from pullgerSquirrel.SquirrelCore import WebElements, Squirrel
-from pullgerLogin.pullgerSquirrel.connectors.selenium import logger
+
+from pullgerInternalControl import pIC_pS
+from pullgerInternalControl.pullgerSquirrel.connectors.selenium.logging import logger
 
 
 class SeleniumConnector:
@@ -47,7 +48,7 @@ class SeleniumConnector:
             driver.execute_script(loading_url)
             time.sleep(3)
         except BaseException as e:
-            raise exceptions.selenium.GetPage(
+            raise pIC_pS.connectors.selenium.GetPage(
                 f'Exception on load: [{loading_url}]. Discription:',
                 level=50,
                 exception=e
@@ -120,7 +121,7 @@ class SeleniumConnector:
         try:
             page_source = driver.page_source
         except BaseException as e:
-            raise exceptions.selenium.General(
+            raise pIC_pS.connectors.selenium.General(
                 msg=f'Exception on getting page source. Function (get_html)',
                 level=50,
                 exception=e
@@ -147,15 +148,111 @@ class SeleniumConnector:
             try:
                 webElementBody.send_keys(keyboard.PAGE_DOWN)
             except BaseException as e:
-                raise exceptions.selenium.PageOperation(
+                raise pIC_pS.connectors.selenium.PageOperation(
                     msg="Error on sending keyboad event PAGE_DOWN. Function: send_page_down.",
                     level=50,
                     exception=e
                 )
         else:
-            raise exceptions.selenium.PageOperation(
+            raise pIC_pS.connectors.selenium.PageOperation(
                 msg="Incorrect page HTML structure (no body).",
                 level=50,
+            )
+
+    @staticmethod
+    def send_tab(squirrel: Squirrel, **kwargs):
+        """
+        Send push key event on current page.
+
+        :param squirrel:
+        :param kwargs:
+        :return: None
+        """
+
+        driver = squirrel.libraries.driver
+        implementation = squirrel.libraries.implementation
+        keyboard = squirrel.libraries.keyboard
+
+        webElementBody = driver.find_element(implementation.XPATH, "//body")
+        if webElementBody is not None:
+            try:
+                webElementBody.send_keys(keyboard.TAB)
+            except BaseException as e:
+                raise pIC_pS.connectors.selenium.PageOperation(
+                    msg="Error on sending keyboad event TAB.",
+                    level=50,
+                    exception=e
+                )
+        else:
+            raise pIC_pS.connectors.selenium.PageOperation(
+                msg="Incorrect page HTML structure (no body).",
+                level=50,
+            )
+
+    @staticmethod
+    def send_space(squirrel: Squirrel, **kwargs):
+        """
+        Send push key event on current page.
+
+        :param squirrel:
+        :param kwargs:
+        :return: None
+        """
+
+        driver = squirrel.libraries.driver
+        implementation = squirrel.libraries.implementation
+        keyboard = squirrel.libraries.keyboard
+
+        webElementBody = driver.find_element(implementation.XPATH, "//body")
+        if webElementBody is not None:
+            try:
+                webElementBody.send_keys(keyboard.SPACE)
+            except BaseException as e:
+                raise pIC_pS.connectors.selenium.PageOperation(
+                    msg="Error on sending keyboad event SPACE.",
+                    level=50,
+                    exception=e
+                )
+        else:
+            raise pIC_pS.connectors.selenium.PageOperation(
+                msg="Incorrect page HTML structure (no body).",
+                level=50,
+            )
+
+    @staticmethod
+    def send_enter(squirrel: Squirrel = None, web_element=None, **kwargs):
+        """
+        Send push key event on current page.
+
+        :param web_element:
+        :param squirrel:
+        :param kwargs:
+        :return: None
+        """
+
+        driver = squirrel.libraries.driver
+        implementation = squirrel.libraries.implementation
+        keyboard = squirrel.libraries.keyboard
+
+        if web_element is None:
+            try:
+                inst = driver.find_element(implementation.XPATH, "//body")
+            except BaseException as e:
+                raise pIC_pS.connectors.selenium.General(
+                    msg="Cant find BODY on page",
+                    level=50,
+                    exception=e
+                )
+        else:
+            inst = web_element
+
+        try:
+            inst.send_keys(keyboard.ENTER)
+        except BaseException as e:
+            raise pIC_pS.connectors.selenium.PageOperation(
+                msg="Error on sending keyboad event ENTER.",
+                level=50,
+                exception=e
             )
 
     @staticmethod
@@ -177,13 +274,13 @@ class SeleniumConnector:
             try:
                 web_element_body.send_keys(keyboard.END)
             except BaseException as e:
-                raise exceptions.selenium.PageOperation(
+                raise pIC_pS.connectors.selenium.PageOperation(
                     msg="Error on sending keyboad event PAGE_DOWN. Function: send_page_down.",
                     level=50,
                     exception=e
                 )
         else:
-            raise exceptions.selenium.PageOperation(
+            raise pIC_pS.connectors.selenium.PageOperation(
                 msg="Incorrect page HTML structure (no body).",
             )
 
@@ -192,7 +289,7 @@ class SeleniumConnector:
         try:
             web_element.send_keys(string)
         except BaseException as e:
-            raise exceptions.selenium.PageOperation(
+            raise pIC_pS.connectors.selenium.PageOperation(
                 msg="Error on sending keyboad event (character set). Function: send_string.",
                 level=50,
                 exception=e
@@ -203,7 +300,7 @@ class SeleniumConnector:
         try:
             web_element.click()
         except BaseException as e:
-            raise exceptions.selenium.PageOperation(
+            raise pIC_pS.connectors.selenium.PageOperation(
                 msg="Error on sending mouse click event. Function: click.",
                 level=50,
                 exception=e
@@ -237,7 +334,7 @@ class SeleniumConnector:
                         Function: (find_element_xpath).  Internal description: {str(e)}'
                     logger.info(inf)
         except BaseException as e:
-            raise exceptions.selenium.General(
+            raise pIC_pS.connectors.selenium.General(
                 msg="Error on executing code in find_element_xpath.",
                 level=50,
                 exception=e
@@ -267,7 +364,7 @@ class SeleniumConnector:
             try:
                 elements_list = inst.find_elements(implementation.XPATH, xpath)
             except BaseException as e:
-                raise exceptions.selenium.General(
+                raise pIC_pS.connectors.selenium.General(
                     msg="Error on find element on the page by XPATH. Function: finds_element_xpath.",
                     level=50,
                     exception=e
@@ -276,7 +373,7 @@ class SeleniumConnector:
             for el in elements_list:
                 result.append(WebElements(squirrel=squirrel, web_element=el))
         except BaseException as e:
-            raise exceptions.selenium.General(
+            raise pIC_pS.connectors.selenium.General(
                 msg="Error on executing code in finds_element_xpath.",
                 level=50,
                 exception=e
@@ -289,7 +386,7 @@ class SeleniumConnector:
         try:
             result = web_element.text
         except BaseException as e:
-            raise exceptions.selenium.PageOperation(
+            raise pIC_pS.connectors.selenium.PageOperation(
                 msg="Error on getting text. Function: text.",
                 level=50,
                 exception=e
@@ -301,7 +398,7 @@ class SeleniumConnector:
         try:
             result = web_element.tag_name
         except BaseException as e:
-            raise exceptions.selenium.PageOperation(
+            raise pIC_pS.connectors.selenium.PageOperation(
                 msg="Error on getting tag name. Function: tag_name.",
                 level=50,
                 exception=e
@@ -313,7 +410,7 @@ class SeleniumConnector:
         try:
             result = web_element.get_attribute(name)
         except BaseException as e:
-            raise exceptions.selenium.PageOperation(
+            raise pIC_pS.connectors.selenium.PageOperation(
                 msg="Error on getting value of attribute. Function: get_attribute.",
                 level=50,
                 exception=e
@@ -325,9 +422,10 @@ class SeleniumConnector:
     def close(squirrel: Squirrel, **kwargs):
         try:
             driver = squirrel.libraries.driver
-            driver.close()
+            # driver.close()
+            driver.quit()
         except BaseException as e:
-            raise exceptions.selenium.PageOperation(
+            raise pIC_pS.connectors.selenium.PageOperation(
                 msg="Error on closing selenium. Function: close.",
                 level=50,
                 exception=e

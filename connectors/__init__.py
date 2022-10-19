@@ -1,7 +1,7 @@
-from pullgerExceptions import pullgerSquirrel as exceptions
+from pullgerInternalControl import pIC_pS
 
 
-class _Connector():
+class _Connector:
     @property
     def selenium(self):
         from . import selenium
@@ -15,50 +15,60 @@ def get_by_name(conn: str, **kwargs):
     responseConnector = None
 
     if type(conn) == str:
-        connEl = conn.split('.')
+        conn_el = conn.split('.')
     else:
-        raise exceptions.IncorrectParameter(
-            f'Incorrect parameter [connector] expect "string".',
+        raise pIC_pS.InterfaceData(
+            msg=f'Incorrect parameter [{conn}] expect "string".',
             level=30
         )
 
-    if len(connEl) != 0:
-        def get_element(connEl, index):
+    if len(conn_el) != 0:
+        def get_element(in_conn_el, index):
             try:
-                return connEl[index]
+                return in_conn_el[index]
             except BaseException as e:
-                raise exceptions.IncorrectParameter(
-                    f'Incorrect format {connEl.join(".")} required element with index {index}.',
+                raise pIC_pS.InterfaceData(
+                    f'Incorrect format {in_conn_el.join(".")} required element with index {index}.',
                     level=30
                 )
 
-        if connEl[0] == 'selenium':
-            element = get_element(connEl, 1)
+        if conn_el[0] == 'selenium':
+            element = get_element(conn_el, 1)
 
             if element == 'chrome':
-                element = get_element(connEl, 2)
+                element = get_element(conn_el, 2)
 
                 if element == 'standard':
                     responseConnector = _Connector().selenium.chrome.standard
                 elif element == 'headless':
                     responseConnector = _Connector().selenium.chrome.headless
                 else:
-                    raise exceptions.IncorrectParameter(
+                    raise pIC_pS.InterfaceData(
+                        f'Connector element {element} does not supported.',
+                        level=30
+                    )
+            elif element == 'stand_alone':
+                element = get_element(conn_el, 2)
+
+                if element == 'general':
+                    responseConnector = _Connector().selenium.stand_alone.general
+                else:
+                    raise pIC_pS.InterfaceData(
                         f'Connector element {element} does not supported.',
                         level=30
                     )
             else:
-                raise exceptions.IncorrectParameter(
+                raise pIC_pS.InterfaceData(
                     f'Connector element {element} does not supported.',
                     level=30
                 )
         else:
-            raise exceptions.IncorrectParameter(
-                f'Connector {connEl[0]} does not exist',
+            raise pIC_pS.InterfaceData(
+                f'Connector {conn_el[0]} does not exist',
                 level=30
             )
     else:
-        raise exceptions.InterfaceData(
+        raise pIC_pS.InterfaceData(
             f"Incorrect connector format name {conn}",
             level=40
         )
@@ -66,7 +76,7 @@ def get_by_name(conn: str, **kwargs):
     if responseConnector is not None:
         return responseConnector
     else:
-        raise exceptions.InternalAlgoritmError(
+        raise pIC_pS.InternalError(
             f'Unexpected variable value',
             level=50
         )
