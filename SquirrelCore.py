@@ -1,10 +1,14 @@
 import time
 import inspect
-from pullgerExceptions import pullgerSquirrel as exceptions
+import uuid
+
 # from .SquirrelConnectors import Connectors
 from . import connectors
 from .connectors.selenium import connector
-from pullgerLogin.pullgerSquirrel import logger
+
+# from pullgerLogin.pullgerSquirrel import logger
+from pullgerInternalControl import pIC_pS
+from pullgerInternalControl.pullgerSquirrel.logging import logger
 
 
 class Squirrel(object):
@@ -13,7 +17,8 @@ class Squirrel(object):
         '_connectorMode',
         '_libraries',
         '_current_url',
-        '_initialized'
+        '_initialized',
+        '_auto_elements'
     )
 
     class _Libraries:
@@ -37,22 +42,6 @@ class Squirrel(object):
             self._implementation = implementation
 
     @property
-    @staticmethod
-    def VERSION():
-        return (1, 0, 1, 0)
-        # versions history
-        # 1.0.1.0 adaptation raise exeptatation fore new version of exceptation module
-
-    @property
-    @staticmethod
-    def VERSION_INFO():
-        return '.'.join(str(nv) for nv in Squirrel.VERSION)
-
-    @property
-    def __version__(self):
-        return self.VERSION_INFO
-
-    @property
     def connector(self):
         return self._connector
 
@@ -62,22 +51,80 @@ class Squirrel(object):
 
     @property
     def current_url(self):
+        self._current_url = self.connector.get_current_url(squirrel=self)
         return self._current_url
 
     @property
     def initialized(self):
         return self._initialized
 
+    class AutoElements:
+        __slots__ = ('squirrel', '_elements_list', '_current_url')
+
+        class AutoElement:
+            __slots__ = ('uuid_auto_element', 'web_element', 'html_element')
+
+            def __init__(self, web_element):
+                self.web_element = web_element
+                self.html_element = web_element.get_attribute("outerHTML")
+                self.uuid_auto_element = uuid.uuid4()
+
+        def __init__(self, squirrel):
+            self.squirrel = squirrel
+            self._elements_list = None
+            self._current_url = None
+
+        def elements_scan(self):
+            self._current_url = self.squirrel.current_url
+            self._elements_list = {}
+
+            list_search_elements = ['body', 'input', 'button', 'c-wiz']
+
+            for search_elem in list_search_elements:
+                input_elements = self.squirrel.finds_xpath(f"//{search_elem}")
+                count = 0
+                for cur_elem in input_elements:
+                    auto_elem = self.AutoElement(cur_elem)
+                    self._elements_list.update({str(auto_elem.uuid_auto_element): auto_elem})
+                    count += 1
+
+            return count
+
+        def elements_list(self):
+            if self._current_url != self.squirrel.current_url \
+                    or self._elements_list is None:
+                self.elements_scan()
+
+            return_list = []
+            for cur_element in self._elements_list.keys():
+                return_list.append({
+                    "uuid_auto_element": str(self._elements_list[cur_element].uuid_auto_element),
+                    "html_element": self._elements_list[cur_element].html_element
+                })
+
+            return return_list
+
+        def elements_get(self, uuid_auto_element: str = None):
+
+            if uuid_auto_element in self._elements_list:
+                return self._elements_list[uuid_auto_element].web_element
+            else:
+                raise pIC_pS.InterfaceData(
+                    f'Does not exist auto element uuid [{uuid_auto_element}]',
+                    level=30
+                )
+
     def __init__(self, conn: connector = None, **kwargs):
         self._connector = None
         self._libraries = None
         self._current_url = False
         self._initialized = False
+        self._auto_elements = self.AutoElements(squirrel=self)
 
         if conn is not None:
             self._connector = conn
         else:
-            raise exceptions.InterfaceData(
+            raise pIC_pS.InterfaceData(
                 f'Incorrect connector DATA: need one off pullgerSquirrel.connectors classes',
                 level=30
             )
@@ -113,18 +160,27 @@ class Squirrel(object):
                 self._current_url = self.connector.get_current_url(squirrel=self)
             else:
                 self._current_url = None
-                raise exceptions.ErrorOnLoadPage(
+                raise pIC_pS.ErrorOnLoadPage(
                     message='Incorrect loading page.',
                     level=40
                 )
         else:
-            raise exceptions.InterfaceData(
+            raise pIC_pS.InterfaceData(
                 message='Incorrect call getPage in squirrel (url is mandatory k kwarg)',
                 level=30
             )
 
-    def get_html(self,**kwargs):
+    def get_html(self, **kwargs):
         return self._connector.get_html(squirrel=self)
+
+    def elements_scan(self):
+        return self._auto_elements.elements_scan()
+
+    def elements_list(self):
+        return self._auto_elements.elements_list()
+
+    def elements_get(self, uuid_auto_element: str = None):
+        return self._auto_elements.elements_get(uuid_auto_element)
 
     def update_url(self):
         self._current_url = self.driver.current_url
@@ -133,7 +189,6 @@ class Squirrel(object):
         return self._connector.close(squirrel=self)
 
     def find_xpath(self, xpath: str, log_error: bool = False, do_not_log: bool = True):
-
         return self._connector.find_element_xpath(
             squirrel=self,
             xpath=xpath,
@@ -142,7 +197,6 @@ class Squirrel(object):
         )
 
     def finds_xpath(self, xpath: str):
-
         return self._connector.finds_element_xpath(
             squirrel=self,
             xpath=xpath
@@ -150,63 +204,18 @@ class Squirrel(object):
 
     def send_end(self):
         self.connector.send_end(squirrel=self)
-        return True
 
     def send_page_down(self):
         self.connector.send_page_down(squirrel=self)
-        return True
 
-    def send_TAB(self):
-        if self._connector == Connectors.selenium:
-            try:
-                self._driver.find_element(self._By.XPATH, "//body").send_keys(self._Keys.TAB)
-                return True;
-            except BaseException as e:
-                raise exceptions.selenium.PageOperation(
-                    f"Error on click button TAB on page {self._driver.current_url}.",
-                    level=40,
-                    exception=e
-                )
+    def send_tab(self):
+        self.connector.send_tab(squirrel=self)
 
-        else:
-            raise exceptions.InternalData(
-                f"Unknown connector.",
-                level=40
-            )
+    def send_space(self):
+        self.connector.send_space(squirrel=self)
 
-    def send_SPACE(self):
-        if self._connector == Connectors.selenium:
-            try:
-                self._driver.find_element(self._By.XPATH, "//body").send_keys(self._Keys.SPACE)
-                return True;
-            except BaseException as e:
-                raise exceptions.selenium.PageOperation(
-                    f"Error on click button SPACE on page {self._driver.current_url}.",
-                    level=40,
-                    exception=e
-                )
-        else:
-            raise exceptions.InternalData(
-                f"Unknown connector.",
-                level=40
-            )
-
-    def send_ENTER(self):
-        if self._connector == Connectors.selenium:
-            try:
-                self._driver.find_element(self._By.XPATH, "//body").send_keys(self._Keys.ENTER)
-                return True;
-            except BaseException as e:
-                raise exceptions.selenium.PageOperation(
-                    f"Error on click button ENTER on page {self._driver.current_url}.",
-                    level=40,
-                    exception=e
-                )
-        else:
-            raise exceptions.InternalData(
-                f"Unknown connector.",
-                level=40
-            )
+    def send_enter(self):
+        self.connector.send_enter(squirrel=self)
 
 
 class WebElements:
@@ -215,20 +224,6 @@ class WebElements:
         '_web_element',
         '_text'
     )
-
-    @property
-    @staticmethod
-    def VERSION():
-        return 1, 0, 1, 0
-
-    @property
-    @staticmethod
-    def VERSION_INFO():
-        return '.'.join(str(nv) for nv in Squirrel.VERSION)
-
-    @property
-    def __version__(self):
-        return self.VERSION_INFO
 
     @property
     def squirrel(self):
@@ -260,16 +255,7 @@ class WebElements:
             name=name
         )
 
-        # if self._connector == Connectors.selenium:
-        #     return self._web_element.get_attribute(inAttribute)
-        # else:
-        #     raise exceptions.InternalData(
-        #         f"Unknown connector.",
-        #         level=40
-        #     )
-
     def find_xpath(self, xpath: str, log_error: bool = False, do_not_log: bool = True):
-
         return self._squirrel.connector.find_element_xpath(
             squirrel=self._squirrel,
             web_element=self._web_element,
@@ -279,7 +265,6 @@ class WebElements:
         )
     
     def finds_xpath(self, xpath: str):
-
         return self._squirrel.connector.finds_element_xpath(
             squirrel=self._squirrel,
             web_element=self._web_element,
@@ -288,5 +273,11 @@ class WebElements:
     def send_string(self, string: str):
         return self.squirrel.connector.send_string(web_element=self.web_element, string=string)
 
+    def send_enter(self):
+        return self.squirrel.connector.send_enter(
+            squirrel=self._squirrel,
+            web_element=self._web_element
+        )
+
     def click(self):
-        return self.squirrel.connector.click(web_element=self.web_element)
+        return self.squirrel.connector.click(web_element=self._web_element)

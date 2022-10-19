@@ -7,7 +7,7 @@ class SeleniumChromeHeadless(SeleniumConnector):
 
     def getDriverLibrary(self):
         from selenium import webdriver
-        from pullgerExceptions import pullgerSquirrel as exceptions
+        from pullgerInternalControl import pIC_pS
 
         chrome_options = webdriver.ChromeOptions()
         chrome_options.add_argument("--headless")
@@ -36,13 +36,13 @@ class SeleniumChromeHeadless(SeleniumConnector):
             errorText = str(e)
 
             if errorText.find("This version of ChromeDriver only supports Chrome version") != -1:
-                raise exceptions.selenium.chrome.DriverVersionDifferences(
+                raise pIC_pS.connectors.selenium.chrome.DriverVersionDifferences(
                     'Incorrect chrome driver versions',
                     level=50,
                     exception=e
                 )
             else:
-                raise exceptions.selenium.chrome.General(
+                raise pIC_pS.connectors.selenium.chrome.General(
                     f'Error on initialisation chrome. Internal error information.',
                     level=50,
                     exception=e

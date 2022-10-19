@@ -6,7 +6,7 @@ class seleniumChromeStandard(SeleniumConnector):
 
     def getDriverLibrary(self):
         import undetected_chromedriver.v2 as webdriver
-        from pullgerExceptions import squirrel as exceptions
+        from pullgerInternalControl import pullgerSquirrel as exceptions
 
         chrome_options = webdriver.ChromeOptions()
         chrome_options.add_argument("--disable-extensions")
@@ -26,13 +26,13 @@ class seleniumChromeStandard(SeleniumConnector):
             errorText = str(e)
 
             if errorText.find("This version of ChromeDriver only supports Chrome version") != -1:
-                raise exceptions.selenium.chrome.DriverVersionDifferences(
+                raise exceptions.connectors.selenium.chrome.DriverVersionDifferences(
                     'Incorrect chrome driver versions',
                     level=50,
                     exception=e
                 )
             else:
-                raise exceptions.selenium.chrome.General(
+                raise exceptions.connectors.selenium.chrome.General(
                     f'Erron on initialisation chrome. Internal error information.',
                     level=50,
                     exception=e
