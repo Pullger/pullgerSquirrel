@@ -3,10 +3,11 @@ from ..general import SeleniumConnector
 
 class SeleniumStandAlone(SeleniumConnector):
     def __str__(self):
-        return "selenium.stand_aline.general"
+        return "selenium.stand_alone.general"
 
     def getDriverLibrary(self):
         from selenium import webdriver
+
         from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
         from pullgerInternalControl import pIC_pS
 
@@ -32,7 +33,10 @@ class SeleniumStandAlone(SeleniumConnector):
         # chrome_options.add_argument('--password-store=basic')
 
         try:
-            wd = webdriver.Remote('http://localhost:4445', desired_capabilities=DesiredCapabilities.CHROME)
+            wd = webdriver.Remote('http://3.67.99.75:4444/wd/hub', desired_capabilities=DesiredCapabilities.CHROME)
+            # wd = webdriver.Remote('http://localhost:4444', desired_capabilities=DesiredCapabilities.CHROME)
+
+            # wd.manage()
         except BaseException as e:
             errorText = str(e)
 
