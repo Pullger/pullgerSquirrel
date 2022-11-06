@@ -36,14 +36,16 @@ class SeleniumConnector:
 
         driver = squirrel.libraries.driver
 
+        url_call = url.replace("'", '"')
+
         try:
             time.sleep(1)
-            if url.find('"') == -1:
+            if url_call.find('"') == -1:
                 sHooks = '"'
             else:
                 sHooks = "'"
 
-            loading_url = f"window.location.href={sHooks}{url}{sHooks}"
+            loading_url = f"window.location.href={sHooks}{url_call}{sHooks}"
 
             driver.execute_script(loading_url)
             time.sleep(3)

@@ -281,3 +281,56 @@ class WebElements:
 
     def click(self):
         return self.squirrel.connector.click(web_element=self._web_element)
+
+
+class Session(object):
+    __slots__ = ('uuid_session', 'connector', 'squirrel', 'domain',
+                 'account', 'authorization', 'active', 'in_use',
+                 'initialized', 'ready', 'live')
+
+    def __str__(self):
+        return self.uuid_session
+
+    def __init__(self, conn=None, squirrel=None, domain=None,
+                 account=None, authorization=None, active: bool = True, in_use: bool = False,
+                 initialized: bool = False, ready: bool = False, live: bool = False):
+
+        if squirrel is None:
+            squirrel = Squirrel(conn=conn)
+            squirrel.initialize()
+
+        if authorization is not None:
+            domain_class = authorization.get_domain()
+            domain = domain_class(squirrel)
+
+            if domain.initialized is not True:
+                pIC_pS.DomainInitialization(
+                    msg=f"Unexpected status initialize domain [{str(domain)}]",
+                    level=50
+                )
+
+        self.uuid_session = str(uuid.uuid4())
+        self.connector = conn
+        self.squirrel = squirrel
+        self.domain = domain
+        self.account = account
+        self.authorization = authorization
+        self.active = active
+        self.in_use = in_use
+        self.initialized = initialized
+        self.ready = ready
+        self.live = live
+
+    @property
+    def structure(self):
+        return {
+            'uuid': str(self.uuid_session),
+            'uuid_session': str(self.uuid_session),
+            'connector': self.connector,
+            'authorization': self.authorization,
+            'used_account': False if self.account is None else True,
+            'active': self.active,
+            'in_use': self.in_use,
+            'ready': self.ready,
+            'live': self.live,
+        }

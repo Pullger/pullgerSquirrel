@@ -1,6 +1,9 @@
 #Vesion history [pullgerSquirrel]
 
-(-) {0.3.0.0} [pullgerSquirrel]
+{0.4.0.0} [pullgerSquirrel]
+ - refactoring: move class from pullgerMultiSessionManager
+
+{0.3.0.0} [pullgerSquirrel]
  --CHANGE--/issues/5-- Functionality of finding html elements and performing operations of them.
  - Bring some code to PEP8 standard
  - Bring some functions to connectors
