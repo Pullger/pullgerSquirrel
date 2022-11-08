@@ -1,5 +1,8 @@
 #Vesion history [pullgerSquirrel]
 
+{0.4.0.1} [pullgerSquirrel]
+ - fix session creation status bug (session not executed)
+
 {0.4.0.0} [pullgerSquirrel]
  - refactoring: move class from pullgerMultiSessionManager
 

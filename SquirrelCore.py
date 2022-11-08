@@ -293,7 +293,7 @@ class Session(object):
 
     def __init__(self, conn=None, squirrel=None, domain=None,
                  account=None, authorization=None, active: bool = True, in_use: bool = False,
-                 initialized: bool = False, ready: bool = False, live: bool = False):
+                 initialized: bool = False, ready: bool = False, live: bool = True):
 
         if squirrel is None:
             squirrel = Squirrel(conn=conn)
