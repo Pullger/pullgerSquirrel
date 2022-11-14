@@ -10,36 +10,35 @@ class SeleniumConnector:
     __slots__ = ()
 
     @abc.abstractmethod
-    def getDriverLibrary(self):
+    def get_driver_library(self, **kwargs):
         pass
 
-    def getKeyboardLibrary(self):
+    @staticmethod
+    def get_keyboard_library(**kwargs):
         from selenium.webdriver.common.keys import Keys
         return Keys
 
-    def getImplementationLibrary(self):
+    @staticmethod
+    def get_implementation_library(**kwargs):
         from selenium.webdriver.common.by import By
         return By
 
-    def get_page(self, squirrel, url: str, timeout: int = None, xpath: str = None, ready_state=None, **kwargs):
-        """
-        Open url in current browser
-
-        :param squirrel:
-        :param url:
-        :param timeout:
-        :param xpath:
-        :param ready_state:
-        :param kwargs:
-        :return:
-        """
-
+    def get_page(self,
+                 squirrel, url: str,
+                 page_control_element: str = None,
+                 delay_before_get: int = 1,
+                 delay_after_get: int = 5,
+                 timeout_ready_state: int = 5,
+                 ready_state=None,
+                 xpath: str=None,
+                 **kwargs
+                 ):
         driver = squirrel.libraries.driver
 
         url_call = url.replace("'", '"')
 
         try:
-            time.sleep(1)
+            time.sleep(delay_before_get)
             if url_call.find('"') == -1:
                 sHooks = '"'
             else:
@@ -48,39 +47,37 @@ class SeleniumConnector:
             loading_url = f"window.location.href={sHooks}{url_call}{sHooks}"
 
             driver.execute_script(loading_url)
-            time.sleep(3)
+            time.sleep(delay_after_get)
         except BaseException as e:
             raise pIC_pS.connectors.selenium.GetPage(
-                f'Exception on load: [{loading_url}]. Discription:',
+                f'Exception on load: [{loading_url}]. Description:',
                 level=50,
                 exception=e
             )
 
         # Wait for render page with timing out
-        if timeout is None:
-            timeout = 5;
         isRendered = False
         circleCalc = 0
 
         if ready_state is not None:
-            time.sleep(1)
-            try:
-                curState = driver.execute_script('return document.readyState');
+            curState = driver.execute_script('return document.readyState');
 
-                while isRendered is False and (circleCalc < timeout or isRendered is True):
-                    if ready_state == curState:
-                        isRendered = True
+            while isRendered is False and (circleCalc < timeout_ready_state or isRendered is True):
+                if ready_state == curState:
+                    isRendered = True
 
-                    if isRendered is False:
-                        time.sleep(1)
-                    circleCalc += 1
-
-                result = isRendered
-            except BaseException as e:
-                result = True
-
+                if isRendered is False:
+                    time.sleep(1)
+                circleCalc += 1
+        elif page_control_element is not None:
+            check_element = self.find_element_xpath(squirrel=squirrel, xpath=page_control_element)
+            if check_element is None:
+                raise pIC_pS.ErrorOnLoadPage(
+                    msg=f"Control element does not exist on page. URL: [{loading_url}]",
+                    level=40
+                )
         elif xpath is not None:
-            while isRendered is False and (circleCalc < timeout or isRendered is True):
+            while isRendered is False and (circleCalc < timeout_ready_state or isRendered is True):
                 CheckBlock = self.find_element_xpath(squirrel=squirrel, xpath=xpath)
                 if CheckBlock is not None:
                     isRendered = True
@@ -88,17 +85,12 @@ class SeleniumConnector:
                     time.sleep(1)
                 circleCalc += 1
 
-            result = isRendered
-        else:
-            result = True
-
-        return result
-
     @staticmethod
-    def get_current_url(squirrel, **kwargs):
+    def get_current_url(squirrel, render_wait=5, **kwargs):
         """
         Return full current URL in connector.
 
+        :param render_wait:
         :param squirrel:
         :param kwargs:
         :return: str
@@ -107,7 +99,7 @@ class SeleniumConnector:
         driver = squirrel.libraries.driver
 
         try:
-            time.sleep(5)  # Wait for rendering
+            time.sleep(render_wait)  # Wait for rendering
             currentURL = driver.current_url
         except BaseException as e:
             logger.error(msg=f"Error on get url ('current_url') description: {str(e)}")
@@ -287,7 +279,7 @@ class SeleniumConnector:
             )
 
     @staticmethod
-    def send_string(web_element, string: str):
+    def send_string(web_element, string: str, **kwargs):
         try:
             web_element.send_keys(string)
         except BaseException as e:
@@ -298,7 +290,7 @@ class SeleniumConnector:
             )
 
     @staticmethod
-    def click(web_element):
+    def click(web_element, **kwargs):
         try:
             web_element.click()
         except BaseException as e:
@@ -384,7 +376,7 @@ class SeleniumConnector:
         return result
 
     @staticmethod
-    def text(web_element):
+    def text(web_element, **kwargs):
         try:
             result = web_element.text
         except BaseException as e:
@@ -396,7 +388,7 @@ class SeleniumConnector:
         return result
 
     @staticmethod
-    def tag_name(web_element):
+    def tag_name(web_element, **kwargs):
         try:
             result = web_element.tag_name
         except BaseException as e:
@@ -408,7 +400,7 @@ class SeleniumConnector:
         return result
 
     @staticmethod
-    def get_attribute(web_element, name: str):
+    def get_attribute(web_element, name: str, **kwargs):
         try:
             result = web_element.get_attribute(name)
         except BaseException as e:
@@ -418,7 +410,6 @@ class SeleniumConnector:
                 exception=e
             )
         return result
-
 
     @staticmethod
     def close(squirrel: Squirrel, **kwargs):

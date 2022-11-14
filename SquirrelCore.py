@@ -25,15 +25,15 @@ class Squirrel(object):
         __slots__ = ('_driver', '_keyboard', '_implementation')
 
         @property
-        def driver(self):
+        def driver(self, **kwargs):
             return self._driver
 
         @property
-        def keyboard(self):
+        def keyboard(self, **kwargs):
             return self._keyboard
 
         @property
-        def implementation(self):
+        def implementation(self, **kwargs):
             return self._implementation
 
         def __init__(self, driver, keyboard, implementation, **kwargs):
@@ -42,20 +42,20 @@ class Squirrel(object):
             self._implementation = implementation
 
     @property
-    def connector(self):
+    def connector(self, **kwargs):
         return self._connector
 
     @property
-    def libraries(self):
+    def libraries(self, **kwargs):
         return self._libraries
 
     @property
-    def current_url(self):
+    def current_url(self, **kwargs):
         self._current_url = self.connector.get_current_url(squirrel=self)
         return self._current_url
 
     @property
-    def initialized(self):
+    def initialized(self, **kwargs):
         return self._initialized
 
     class AutoElements:
@@ -64,17 +64,17 @@ class Squirrel(object):
         class AutoElement:
             __slots__ = ('uuid_auto_element', 'web_element', 'html_element')
 
-            def __init__(self, web_element):
+            def __init__(self, web_element, **kwargs):
                 self.web_element = web_element
                 self.html_element = web_element.get_attribute("outerHTML")
                 self.uuid_auto_element = uuid.uuid4()
 
-        def __init__(self, squirrel):
+        def __init__(self, squirrel, **kwargs):
             self.squirrel = squirrel
             self._elements_list = None
             self._current_url = None
 
-        def elements_scan(self):
+        def elements_scan(self, **kwargs):
             self._current_url = self.squirrel.current_url
             self._elements_list = {}
 
@@ -90,7 +90,7 @@ class Squirrel(object):
 
             return count
 
-        def elements_list(self):
+        def elements_list(self, **kwargs):
             if self._current_url != self.squirrel.current_url \
                     or self._elements_list is None:
                 self.elements_scan()
@@ -104,7 +104,7 @@ class Squirrel(object):
 
             return return_list
 
-        def elements_get(self, uuid_auto_element: str = None):
+        def elements_get(self, uuid_auto_element: str = None, **kwargs):
 
             if uuid_auto_element in self._elements_list:
                 return self._elements_list[uuid_auto_element].web_element
@@ -129,11 +129,11 @@ class Squirrel(object):
                 level=30
             )
 
-    def initialize(self):
+    def initialize(self, **kwargs):
         self._libraries = self._Libraries(
-            keyboard=self._connector.getKeyboardLibrary(),
-            implementation=self._connector.getImplementationLibrary(),
-            driver=self._connector.getDriverLibrary()
+            keyboard=self._connector.get_keyboard_library(),
+            implementation=self._connector.get_implementation_library(),
+            driver=self._connector.get_driver_library()
         )
 
         self._initialized = True
@@ -155,15 +155,16 @@ class Squirrel(object):
         :return: no return
         """
         if url is not None:
-            result = self.connector.get_page(squirrel=self, url=url, **kwargs)
-            if result is True:
-                self._current_url = self.connector.get_current_url(squirrel=self)
-            else:
-                self._current_url = None
-                raise pIC_pS.ErrorOnLoadPage(
-                    message='Incorrect loading page.',
-                    level=40
-                )
+            self.connector.get_page(squirrel=self, url=url, **kwargs)
+            # if result is True:
+            self._current_url = self.connector.get_current_url(squirrel=self, **kwargs)
+            pass
+            # else:
+            #     self._current_url = None
+            #     raise pIC_pS.ErrorOnLoadPage(
+            #         message='Incorrect loading page.',
+            #         level=40
+            #     )
         else:
             raise pIC_pS.InterfaceData(
                 message='Incorrect call getPage in squirrel (url is mandatory k kwarg)',
@@ -171,51 +172,53 @@ class Squirrel(object):
             )
 
     def get_html(self, **kwargs):
-        return self._connector.get_html(squirrel=self)
+        return self._connector.get_html(squirrel=self, **kwargs)
 
-    def elements_scan(self):
-        return self._auto_elements.elements_scan()
+    def elements_scan(self, **kwargs):
+        return self._auto_elements.elements_scan(**kwargs)
 
-    def elements_list(self):
-        return self._auto_elements.elements_list()
+    def elements_list(self, **kwargs):
+        return self._auto_elements.elements_list(**kwargs)
 
-    def elements_get(self, uuid_auto_element: str = None):
-        return self._auto_elements.elements_get(uuid_auto_element)
+    def elements_get(self, uuid_auto_element: str = None, **kwargs):
+        return self._auto_elements.elements_get(uuid_auto_element, **kwargs)
 
-    def update_url(self):
+    def update_url(self, **kwargs):
         self._current_url = self.driver.current_url
 
-    def close(self):
-        return self._connector.close(squirrel=self)
+    def close(self, **kwargs):
+        return self._connector.close(squirrel=self, **kwargs)
 
-    def find_xpath(self, xpath: str, log_error: bool = False, do_not_log: bool = True):
+    def find_xpath(self, xpath: str, log_error: bool = False, do_not_log: bool = True, **kwargs):
         return self._connector.find_element_xpath(
             squirrel=self,
             xpath=xpath,
             log_error=log_error,
-            do_not_log=do_not_log
+            do_not_log=do_not_log,
+            **kwargs
         )
 
-    def finds_xpath(self, xpath: str):
+    def finds_xpath(self, xpath: str, **kwargs):
         return self._connector.finds_element_xpath(
             squirrel=self,
-            xpath=xpath
+            xpath=xpath,
+            **kwargs
         )
 
-    def send_end(self):
-        self.connector.send_end(squirrel=self)
+    def send_end(self, **kwargs):
+        self.connector.send_end(squirrel=self, **kwargs)
 
-    def send_page_down(self):
-        self.connector.send_page_down(squirrel=self)
+    def send_page_down(self, **kwargs):
+        self.connector.send_page_down(squirrel=self, **kwargs)
 
-    def send_tab(self):
-        self.connector.send_tab(squirrel=self)
+    def send_tab(self, **kwargs):
+        self.connector.send_tab(squirrel=self, **kwargs)
 
-    def send_space(self):
-        self.connector.send_space(squirrel=self)
+    def send_space(self, **kwargs):
+        self.connector.send_space(squirrel=self, **kwargs)
 
-    def send_enter(self):
-        self.connector.send_enter(squirrel=self)
+    def send_enter(self, **kwargs):
+        self.connector.send_enter(squirrel=self, **kwargs)
 
 
 class WebElements:
@@ -334,3 +337,45 @@ class Session(object):
             'ready': self.ready,
             'live': self.live,
         }
+
+    def get_page(self, **kwargs):
+        return self.squirrel.get_page(**kwargs)
+
+    def get_html(self, **kwargs):
+        return self.squirrel.get_html(**kwargs)
+
+    def elements_scan(self, **kwargs):
+        return self.squirrel.elements_scan(**kwargs)
+
+    def elements_list(self, **kwargs):
+        return self.squirrel.elements_list(**kwargs)
+
+    def elements_get(self, **kwargs):
+        return self.squirrel.elements_get(**kwargs)
+
+    def update_url(self, **kwargs):
+        return self.squirrel.update_url(**kwargs)
+
+    def close(self, **kwargs):
+        return self.squirrel.close(**kwargs)
+
+    def find_xpath(self, **kwargs):
+        return self.squirrel.find_xpath(**kwargs)
+
+    def finds_xpath(self, **kwargs):
+        return self.squirrel.finds_xpath(**kwargs)
+
+    def send_end(self, **kwargs):
+        return self.squirrel.send_end(**kwargs)
+
+    def send_page_down(self, **kwargs):
+        return self.squirrel.send_end(**kwargs)
+
+    def send_tab(self, **kwargs):
+        return self.squirrel.send_end(**kwargs)
+
+    def send_space(self, **kwargs):
+        return self.squirrel.send_end(**kwargs)
+
+    def send_enter(self, **kwargs):
+        return self.squirrel.send_end(**kwargs)

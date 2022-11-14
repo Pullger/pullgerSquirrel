@@ -4,7 +4,7 @@ class seleniumChromeStandard(SeleniumConnector):
     def __str__(self):
         return "selenium.chrome_undetected.standard"
 
-    def getDriverLibrary(self):
+    def get_driver_library(self):
         import undetected_chromedriver.v2 as webdriver
         from pullgerInternalControl import pullgerSquirrel as exceptions
 

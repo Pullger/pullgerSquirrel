@@ -5,7 +5,7 @@ class SeleniumChromeStandard(SeleniumConnector):
     def __str__(self):
         return "selenium.chrome.standard"
 
-    def getDriverLibrary(self):
+    def get_driver_library(self):
         from selenium import webdriver
 
         from pullgerInternalControl import pIC_pS

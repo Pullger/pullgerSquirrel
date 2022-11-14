@@ -5,7 +5,7 @@ class SeleniumChromeHeadless(SeleniumConnector):
     def __str__(self):
         return "selenium.chrome.headless"
 
-    def getDriverLibrary(self):
+    def get_driver_library(self):
         from selenium import webdriver
         from pullgerInternalControl import pIC_pS
 

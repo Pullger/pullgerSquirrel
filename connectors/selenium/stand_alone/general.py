@@ -5,7 +5,7 @@ class SeleniumStandAlone(SeleniumConnector):
     def __str__(self):
         return "selenium.stand_alone.general"
 
-    def getDriverLibrary(self):
+    def get_driver_library(self):
         from selenium import webdriver
 
         from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
