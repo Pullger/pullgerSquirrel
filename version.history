@@ -1,5 +1,8 @@
 #Vesion history [pullgerSquirrel]
 
+{0.5.1.0} [pullgerSquirrel]
+ - add function to run in windows
+
 {0.5.0.0} [pullgerSquirrel]
  - repeat function on session class
  - Bring some code to PEP8

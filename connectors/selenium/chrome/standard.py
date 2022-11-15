@@ -1,5 +1,6 @@
 from ..general import SeleniumConnector
-
+from django.conf import settings
+import os
 
 class SeleniumChromeStandard(SeleniumConnector):
     def __str__(self):
@@ -9,6 +10,11 @@ class SeleniumChromeStandard(SeleniumConnector):
         from selenium import webdriver
 
         from pullgerInternalControl import pIC_pS
+
+        if settings.SQUIRREL_OS.upper() == "WIN":
+            executable_path = os.path.join(settings.BASE_DIR, "TMP", "chromedriver_win32", "chromedriver.exe")
+        else:
+            executable_path = None
 
         chrome_options = webdriver.ChromeOptions()
         chrome_options.add_argument("--disable-extensions")
@@ -23,7 +29,7 @@ class SeleniumChromeStandard(SeleniumConnector):
         chrome_options.add_argument('--password-store=basic')
 
         try:
-            wd = webdriver.Chrome(options=chrome_options)
+            wd = webdriver.Chrome(options=chrome_options, executable_path=executable_path)
         except BaseException as e:
             errorText = str(e)
 
